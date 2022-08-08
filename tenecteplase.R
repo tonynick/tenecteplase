@@ -110,3 +110,33 @@ df$dose=factor(df$dose,levels=unique(df$dose))
 m.qual=rma(yi=TE,sei=seTE,data=m.bin,method="ML",mods=~dose+NIHSS,test="knha")
 m.qual
 
+#simulations of weights and prices; used weights from https://www.nejm.org/doi/full/10.1056/nejm199512143332401 and https://www.nejm.org/doi/full/10.1056/nejmoa0804656; 6 different patient groups; number for each distribution is the sample size of each group reported in the papers
+
+one=rnorm(144,76,15)
+two=rnorm(147,80,18)
+three=rnorm(168,76,16)
+four=rnorm(165,80,21)
+five=rnorm(418,78.5,15)
+six=rnorm(403,78,16)
+
+#combine all into one sample population
+weight=c(one,two,three,four,five,six)
+
+#sample with replacement from weight population
+tracking=data.frame(run=1:10000,alteplase_cost=NA,tenecteplase_cost=NA)
+
+for (i in 1:10000){
+patients=sample(weight,600,replace=T)  
+alteplase_dose=patients*0.9
+alteplase_dose=ifelse(alteplase_dose>90,90,alteplase_dose)
+alteplase_vials=ceiling(alteplase_dose/50)
+alteplase_cost=ifelse(alteplase_vials==2,2874.05,1437.03)
+tracking$alteplase_cost[i]=sum(alteplase_cost)
+tracking$tenecteplase_cost[i]=600*2874.05
+}
+tracking$difference=tracking$tenecteplase_cost-tracking$alteplase_cost
+quantile(tracking$difference,c(0.025,0.975))
+mean(tracking$difference)
+sum(tracking$difference>=100000)
+19/10000
+0.0019*100
